@@ -10,6 +10,7 @@ using Library.API.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -35,7 +36,12 @@ namespace Library.API
 
             services.AddScoped<ILibraryRepository, LibraryRepository>();
 
-            services.AddMvc();
+            services.AddMvc(opt =>
+            {
+                opt.ReturnHttpNotAcceptable = true;
+                opt.RespectBrowserAcceptHeader = true;
+                //opt.OutputFormatters.Add(new XmlSerializerOutputFormatter());
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -60,11 +66,11 @@ namespace Library.API
             Mapper.Initialize(x =>
             {
                 x.CreateMap<Book, BookDto>().ReverseMap();
-                    //.ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
-                    //.ForMember(dest => dest.AuthorId, opt => opt.MapFrom(src => src.AuthorId))
-                    //.ForMember(dest => dest.Title, opt => opt.MapFrom(src => src.Title))
-                    //.ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description))
-                    //.ForSourceMember(dest => dest.Author, opt => opt.Ignore());
+
+                x.CreateMap<Author, CreateAuthorDto>()
+                    .ForSourceMember(src => src.Id, opt => opt.Ignore())
+                    .ForSourceMember(src => src.Books, opt => opt.Ignore())
+                    .ReverseMap();
 
                 x.CreateMap<Author, AuthorDto>()
                     .ForMember(dest => dest.Name, opt => opt.MapFrom(src => $"{src.FirstName} {src.LastName}"))

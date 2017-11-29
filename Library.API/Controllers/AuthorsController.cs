@@ -38,6 +38,21 @@ namespace Library.API.Controllers
             return Ok(Mapper.Map<AuthorDto>(author));
         }
 
+        [HttpPost]
+        public IActionResult Create([FromBody] CreateAuthorDto model)
+        {
+            if (model == null || !ModelState.IsValid)
+                return BadRequest();
+
+            var author = Mapper.Map<Author>(model);
+            _libraryRepository.AddAuthor(author);
+
+            if (!_libraryRepository.Save())
+                throw new Exception("Error");
+
+            return Created($"/api/authors/{author.Id}", Mapper.Map<AuthorDto>(author));
+        }
+
         [HttpGet("AddBulk")]
         public IActionResult AddAuthors()
         {
