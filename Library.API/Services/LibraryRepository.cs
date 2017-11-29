@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace Library.API.Services
 {
@@ -20,18 +22,16 @@ namespace Library.API.Services
             _context.Authors.Add(author);
 
             // the repository fills the id (instead of using identity columns)
-            if (author.Books.Any())
+            if (!author.Books.Any()) return;
+            foreach (var book in author.Books)
             {
-                foreach (var book in author.Books)
-                {
-                    book.Id = Guid.NewGuid();
-                }
+                book.Id = Guid.NewGuid();
             }
         }
 
-        public void AddBookForAuthor(Guid authorId, Book book)
+        public async void AddBookForAuthor(Guid authorId, Book book)
         {
-            var author = GetAuthor(authorId);
+            var author = await GetAuthor(authorId);
             if (author != null)
             {
                 // if there isn't an id filled out (ie: we're not upserting),
@@ -59,22 +59,22 @@ namespace Library.API.Services
             _context.Books.Remove(book);
         }
 
-        public Author GetAuthor(Guid authorId)
+        public async Task<Author> GetAuthor(Guid authorId)
         {
-            return _context.Authors.FirstOrDefault(a => a.Id == authorId);
+            return await _context.Authors.FirstOrDefaultAsync(a => a.Id == authorId);
         }
 
-        public IEnumerable<Author> GetAuthors()
+        public async Task<IEnumerable<Author>> GetAuthors()
         {
-            return _context.Authors.OrderBy(a => a.FirstName).ThenBy(a => a.LastName);
+            return await _context.Authors.OrderBy(a => a.FirstName).ThenBy(a => a.LastName).ToListAsync();
         }
 
-        public IEnumerable<Author> GetAuthors(IEnumerable<Guid> authorIds)
+        public async Task<IEnumerable<Author>> GetAuthors(IEnumerable<Guid> authorIds)
         {
-            return _context.Authors.Where(a => authorIds.Contains(a.Id))
+            return await _context.Authors.Where(a => authorIds.Contains(a.Id))
                 .OrderBy(a => a.FirstName)
                 .ThenBy(a => a.LastName)
-                .ToList();
+                .ToListAsync();
         }
 
         public void UpdateAuthor(Author author)
@@ -82,15 +82,14 @@ namespace Library.API.Services
             // no code in this implementation
         }
 
-        public Book GetBookForAuthor(Guid authorId, Guid bookId)
+        public async Task<Book> GetBookForAuthor(Guid authorId, Guid bookId)
         {
-            return _context.Books.FirstOrDefault(b => b.AuthorId == authorId && b.Id == bookId);
+            return await _context.Books.Include(x => x.Author).FirstOrDefaultAsync(b => b.AuthorId == authorId && b.Id == bookId);
         }
 
-        public IEnumerable<Book> GetBooksForAuthor(Guid authorId)
+        public async Task<IEnumerable<Book>> GetBooksForAuthor(Guid authorId)
         {
-            return _context.Books
-                        .Where(b => b.AuthorId == authorId).OrderBy(b => b.Title).ToList();
+            return await _context.Books.Include(x => x.Author).Where(b => b.AuthorId == authorId).OrderBy(b => b.Title).ToListAsync();
         }
 
         public void UpdateBookForAuthor(Book book)

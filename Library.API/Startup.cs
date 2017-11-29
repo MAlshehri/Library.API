@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using AutoMapper;
 using Library.API.Entities;
 using Library.API.Models;
 using Library.API.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,12 +30,12 @@ namespace Library.API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc();
-            var connectionString = Configuration["connectionStrings:libraryDBConnectionString"];
-            services.AddDbContext<LibraryContext>(o => o.UseSqlServer(connectionString));
+            services.AddDbContext<LibraryContext>(options =>
+                options.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
 
-            // register the repository
             services.AddScoped<ILibraryRepository, LibraryRepository>();
+
+            services.AddMvc();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -42,13 +45,32 @@ namespace Library.API
             {
                 app.UseDeveloperExceptionPage();
             }
-
-            AutoMapper.Mapper.Initialize(config =>
+            else
             {
-                config.CreateMap<Author, AuthorDto>()
+                app.UseExceptionHandler(appBuilder =>
+                {
+                    appBuilder.Run(async context =>
+                    {
+                        context.Response.StatusCode = 500;
+                        await context.Response.WriteAsync("An unexpected error has happened");
+                    });
+                });
+            }
+
+            Mapper.Initialize(x =>
+            {
+                x.CreateMap<Book, BookDto>().ReverseMap();
+                    //.ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+                    //.ForMember(dest => dest.AuthorId, opt => opt.MapFrom(src => src.AuthorId))
+                    //.ForMember(dest => dest.Title, opt => opt.MapFrom(src => src.Title))
+                    //.ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description))
+                    //.ForSourceMember(dest => dest.Author, opt => opt.Ignore());
+
+                x.CreateMap<Author, AuthorDto>()
                     .ForMember(dest => dest.Name, opt => opt.MapFrom(src => $"{src.FirstName} {src.LastName}"))
                     .ForMember(dest => dest.Age, opt => opt.MapFrom(src => src.DateOfBirth.ToCurrentAge()));
             });
+
             app.UseMvc();
         }
     }

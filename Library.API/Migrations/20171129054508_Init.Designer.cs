@@ -11,15 +11,14 @@ using System;
 namespace Library.API.Migrations
 {
     [DbContext(typeof(LibraryContext))]
-    [Migration("20171126073802_Init")]
+    [Migration("20171129054508_Init")]
     partial class Init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "2.0.1-rtm-125")
-                .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                .HasAnnotation("ProductVersion", "2.0.1-rtm-125");
 
             modelBuilder.Entity("Library.API.Entities.Author", b =>
                 {
