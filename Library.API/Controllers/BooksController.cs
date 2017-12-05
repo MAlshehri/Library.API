@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AutoMapper;
+using Library.API.Entities;
 using Library.API.Models;
 using Library.API.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -35,6 +36,26 @@ namespace Library.API.Controllers
             if (authorBook == null)
                 return NotFound();
             return Ok(Mapper.Map<BookDto>(authorBook));
+        }
+
+        [HttpPost()]
+        public IActionResult CreateBookForAuthor(Guid authorId, [FromBody] CreateBookDto model)
+        {
+            if(model == null || !_libraryRepository.AuthorExists(authorId))
+            {
+                return BadRequest();
+            }
+
+            var book = Mapper.Map<Book>(model);
+            _libraryRepository.AddBookForAuthor(authorId, book);
+
+            if(!_libraryRepository.Save())
+            {
+                throw new Exception("Error");
+            }
+
+            return Created($"api/authors/{authorId}/books/{book.Id}", Mapper.Map<BookDto>(book));
+
         }
     }
 }

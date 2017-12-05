@@ -66,7 +66,7 @@ namespace Library.API
             Mapper.Initialize(x =>
             {
                 x.CreateMap<Book, BookDto>().ReverseMap();
-
+                x.CreateMap<Book, CreateBookDto>().ReverseMap();
                 x.CreateMap<Author, CreateAuthorDto>()
                     .ForSourceMember(src => src.Id, opt => opt.Ignore())
                     .ForSourceMember(src => src.Books, opt => opt.Ignore())
